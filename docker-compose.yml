@@ -1,0 +1,27 @@
+services:
+  gallery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gallery-exhibition
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - "18381:18381"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - APP_PORT=18381
+      - DB_PATH=./api/data/exhibition.db
+    volumes:
+      - gallery-data:/app/api/data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:18381/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  gallery-data:
+    name: gallery-exhibition-data
