@@ -54,39 +54,40 @@ export default function TaskCard({ task, exhibitPlacement, readOnly, onProgressU
   };
 
   return (
-    <div className="p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
-          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColor(task.status)}`}>
-            {statusLabel(task.status)}
-          </span>
-          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${priorityColor(task.priority)}`}>
-            {priorityLabel(task.priority)}
-          </span>
-          <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600">
-            {categoryLabel(task.category)}
-          </span>
-        </div>
-        <h4 className="font-semibold text-slate-800 truncate">{task.title}</h4>
-      </div>
-        {task.description && (
-          <p className="text-xs text-slate-500 mt-1 line-clamp-2">{task.description}</p>
-        )}
-        {exhibitPlacement && (
-          <div className="mt-2 text-xs text-indigo-700 bg-indigo-50 rounded-lg px-2 py-1 inline-flex items-center gap-1">
-          <Lock className="w-3 h-3" />
-          关联展品：{exhibitPlacement.name}
+    <>
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${statusColor(task.status)}`}>
+                {statusLabel(task.status)}
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${priorityColor(task.priority)}`}>
+                {priorityLabel(task.priority)}
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600">
+                {categoryLabel(task.category)}
+              </span>
+            </div>
+            <h4 className="font-semibold text-slate-800 truncate">{task.name}</h4>
+            {task.description && (
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{task.description}</p>
+            )}
+            {exhibitPlacement && (
+              <div className="mt-2 text-xs text-indigo-700 bg-indigo-50 rounded-lg px-2 py-1 inline-flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                关联展品：{exhibitPlacement.name}
+              </div>
+            )}
           </div>
-        )}
+          <button
+            onClick={() => setShowActions(!showActions)}
+            className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg transition flex-shrink-0"
+          >
+            {showActions ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
-      <button
-        onClick={() => setShowActions(!showActions)}
-        className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg transition flex-shrink-0"
-      >
-        {showActions ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
-      </button>
-    </div>
 
     {(task.assigned_to || task.due_date || task.progress !== undefined) && (
       <div className="px-4 pb-3 flex items-center gap-4 text-xs text-slate-500 flex-wrap">
@@ -127,7 +128,7 @@ export default function TaskCard({ task, exhibitPlacement, readOnly, onProgressU
             <button
               onClick={() => handleStatusChange('pending')}
               disabled={readOnly || isUpdating}
-              className={`px-3 py-1.5 text-xs rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 disabled:opacity-50 transition flex items-center gap-1"
+              className="px-3 py-1.5 text-xs rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 disabled:opacity-50 transition flex items-center gap-1"
             >
               <Pause className="w-3 h-3" /> 待办
             </button>

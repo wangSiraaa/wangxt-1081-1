@@ -45,6 +45,7 @@ import type {
   CreateTaskRequest,
   AuditLogType,
   TaskAuditLog,
+  ExhibitStatus,
 } from '../../shared/types';
 
 type ActiveTab = 'tasks' | 'exhibits' | 'audit';
@@ -62,7 +63,7 @@ function computeRiskFlags(task: Task, allTasks: Task[]) {
   for (const depId of deps) {
     const dep = allTasks.find((t) => t.id === depId);
     if (dep && dep.status !== 'completed') {
-      flags.push({ label: `前置任务未完成: ${dep.title.substring(0, 10)}`, type: 'danger' });
+      flags.push({ label: `前置任务未完成: ${dep.name.substring(0, 10)}`, type: 'danger' });
     }
   }
   if (task.earliest_start && new Date(task.earliest_start) > new Date() && task.status === 'pending') {
@@ -114,12 +115,13 @@ export default function ExhibitionDetail() {
   const [selectedPhase, setSelectedPhase] = useState<TaskPhase>('pre_exhibition');
 
   const [taskForm, setTaskForm] = useState({
-    title: '',
+    name: '',
     description: '',
     category: 'wall_install' as CreateTaskRequest['category'],
+    priority: 'medium' as CreateTaskRequest['priority'],
+    assignee_role: 'worker' as CreateTaskRequest['assignee_role'],
     assigned_to: '',
     due_date: '',
-    priority: 'medium' as CreateTaskRequest['priority'],
     estimated_hours: 4,
     phase: 'pre_exhibition' as TaskPhase,
     transport_window_start: '',
@@ -136,7 +138,7 @@ export default function ExhibitionDetail() {
     year: '',
     is_key_exhibit: false,
     needs_thermostat: false,
-    status: 'not_arrived' as CreateTaskRequest extends infer R ? R : never,
+    status: 'not_arrived' as ExhibitStatus,
     position: '',
   });
 
@@ -203,18 +205,19 @@ export default function ExhibitionDetail() {
   const isReadOnly = currentExhibition?.read_only || currentExhibition?.anomaly_readonly;
 
   const handleCreateTask = async () => {
-    if (!taskForm.title) return;
+    if (!taskForm.name) return;
     try {
       await createTask({
         exhibition_id: id,
-        title: taskForm.title,
+        name: taskForm.name,
         description: taskForm.description || null,
         category: taskForm.category,
+        priority: taskForm.priority,
+        assignee_role: taskForm.assignee_role,
         assigned_to: taskForm.assigned_to || null,
         due_date: taskForm.due_date || null,
-        priority: taskForm.priority,
         estimated_hours: taskForm.estimated_hours,
-        created_by: 'curator',
+        created_by: 'user_curator_001',
         phase: taskForm.phase,
         transport_window_start: taskForm.transport_window_start || null,
         transport_window_end: taskForm.transport_window_end || null,
@@ -225,12 +228,13 @@ export default function ExhibitionDetail() {
       });
       setShowTaskModal(false);
       setTaskForm({
-        title: '',
+        name: '',
         description: '',
         category: 'wall_install',
+        priority: 'medium',
+        assignee_role: 'worker',
         assigned_to: '',
         due_date: '',
-        priority: 'medium',
         estimated_hours: 4,
         phase: 'pre_exhibition',
         transport_window_start: '',
@@ -687,7 +691,7 @@ export default function ExhibitionDetail() {
                                         return (
                                           <div key={depId} className="flex items-center justify-between text-xs">
                                             <span className="text-slate-700">
-                                              {dep?.title || depId.substring(0, 14)}
+                                              {dep?.name || depId.substring(0, 14)}
                                             </span>
                                             <div className="flex items-center gap-2">
                                               <span className={phaseColor(dep?.phase as TaskPhase)}>
@@ -935,11 +939,42 @@ export default function ExhibitionDetail() {
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">任务标题 *</label>
                 <input
                   type="text"
-                  value={taskForm.title}
-                  onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+                  value={taskForm.name}
+                  onChange={(e) => setTaskForm({ ...taskForm, name: e.target.value })}
                   className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
                   placeholder="展墙A - 主视觉布展"
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">优先级</label>
+                  <select
+                    value={taskForm.priority}
+                    onChange={(e) =>
+                      setTaskForm({ ...taskForm, priority: e.target.value as CreateTaskRequest['priority'] })
+                    }
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="low">低</option>
+                    <option value="medium">中</option>
+                    <option value="high">高</option>
+                    <option value="critical">紧急</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">负责角色</label>
+                  <select
+                    value={taskForm.assignee_role}
+                    onChange={(e) =>
+                      setTaskForm({ ...taskForm, assignee_role: e.target.value as CreateTaskRequest['assignee_role'] })
+                    }
+                    className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="curator">策展人</option>
+                    <option value="worker">施工队</option>
+                    <option value="director">馆长</option>
+                  </select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -1073,31 +1108,16 @@ export default function ExhibitionDetail() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">优先级</label>
-                  <select
-                    value={taskForm.priority}
-                    onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as never })}
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  >
-                    <option value="low">低</option>
-                    <option value="medium">中</option>
-                    <option value="high">高</option>
-                    <option value="critical">紧急</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">预估工时（小时）</label>
-                  <input
-                    type="number"
-                    value={taskForm.estimated_hours}
-                    onChange={(e) =>
-                      setTaskForm({ ...taskForm, estimated_hours: parseInt(e.target.value) || 0 })
-                    }
-                    className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">预估工时（小时）</label>
+                <input
+                  type="number"
+                  value={taskForm.estimated_hours}
+                  onChange={(e) =>
+                    setTaskForm({ ...taskForm, estimated_hours: parseInt(e.target.value) || 0 })
+                  }
+                  className="w-full px-4 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">说明</label>
@@ -1128,7 +1148,7 @@ export default function ExhibitionDetail() {
                         }}
                         className="rounded text-indigo-600"
                       />
-                      <span className="text-slate-700">{t.title}</span>
+                      <span className="text-slate-700">{t.name}</span>
                       <span className="text-xs text-slate-400 ml-auto">{statusLabel(t.status)}</span>
                     </label>
                   ))}

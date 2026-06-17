@@ -42,11 +42,13 @@ export function initDatabase(): void {
       description TEXT NOT NULL DEFAULT '',
       phase TEXT NOT NULL DEFAULT 'pre_exhibition' CHECK(phase IN ('pre_exhibition', 'opening', 'teardown')),
       category TEXT NOT NULL CHECK(category IN (
-        'planning', 'design', 'construction', 'installation',
-        'lighting', 'exhibit_placement', 'quality_check', 'opening_preparation'
+        'wall_install', 'installation', 'framing', 'lighting',
+        'exhibit_placement', 'condition_check', 'label_printing', 'cleaning',
+        'planning', 'design', 'construction', 'quality_check', 'opening_preparation'
       )),
       status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'in_progress', 'completed', 'blocked')),
       progress INTEGER NOT NULL DEFAULT 0 CHECK(progress >= 0 AND progress <= 100),
+      priority TEXT NOT NULL DEFAULT 'medium' CHECK(priority IN ('low', 'medium', 'high', 'critical')),
       assignee_role TEXT NOT NULL CHECK(assignee_role IN ('curator', 'worker', 'director')),
       assigned_to TEXT REFERENCES users(id),
       due_date TEXT,
@@ -54,8 +56,8 @@ export function initDatabase(): void {
       completed_at TEXT,
       transport_window_start TEXT,
       transport_window_end TEXT,
-      insurance_status TEXT NOT NULL DEFAULT 'not_insured' CHECK(insurance_status IN ('not_insured', 'insured', 'claim_in_progress')),
-      lighting_check TEXT NOT NULL DEFAULT 'pending' CHECK(lighting_check IN ('pending', 'passed', 'failed')),
+      insurance_status TEXT NOT NULL DEFAULT 'not_set' CHECK(insurance_status IN ('not_set', 'pending', 'covered', 'not_required')),
+      lighting_check TEXT NOT NULL DEFAULT 'not_required' CHECK(lighting_check IN ('not_required', 'pending', 'passed', 'failed')),
       hoisting_order INTEGER,
       earliest_start TEXT,
       notes TEXT,
@@ -87,7 +89,7 @@ export function initDatabase(): void {
       restoration_confirmed_at TEXT,
       restoration_confirmed_by TEXT REFERENCES users(id),
       placement_task_id TEXT REFERENCES tasks(id),
-      status TEXT NOT NULL DEFAULT 'not_arrived' CHECK(status IN ('not_arrived', 'in_storage', 'placed', 'in_position')),
+      status TEXT NOT NULL DEFAULT 'not_arrived' CHECK(status IN ('not_arrived', 'in_transit', 'arrived', 'in_storage', 'on_display', 'removed', 'in_position', 'placed')),
       position TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -147,6 +149,9 @@ export function initDatabase(): void {
   if (!columnExists('tasks', 'phase')) {
     db.exec(`ALTER TABLE tasks ADD COLUMN phase TEXT NOT NULL DEFAULT 'pre_exhibition' CHECK(phase IN ('pre_exhibition', 'opening', 'teardown'))`);
   }
+  if (!columnExists('tasks', 'priority')) {
+    db.exec(`ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium' CHECK(priority IN ('low', 'medium', 'high', 'critical'))`);
+  }
   if (!columnExists('tasks', 'transport_window_start')) {
     db.exec(`ALTER TABLE tasks ADD COLUMN transport_window_start TEXT`);
   }
@@ -154,10 +159,10 @@ export function initDatabase(): void {
     db.exec(`ALTER TABLE tasks ADD COLUMN transport_window_end TEXT`);
   }
   if (!columnExists('tasks', 'insurance_status')) {
-    db.exec(`ALTER TABLE tasks ADD COLUMN insurance_status TEXT NOT NULL DEFAULT 'not_insured' CHECK(insurance_status IN ('not_insured', 'insured', 'claim_in_progress'))`);
+    db.exec(`ALTER TABLE tasks ADD COLUMN insurance_status TEXT NOT NULL DEFAULT 'not_set' CHECK(insurance_status IN ('not_set', 'pending', 'covered', 'not_required'))`);
   }
   if (!columnExists('tasks', 'lighting_check')) {
-    db.exec(`ALTER TABLE tasks ADD COLUMN lighting_check TEXT NOT NULL DEFAULT 'pending' CHECK(lighting_check IN ('pending', 'passed', 'failed'))`);
+    db.exec(`ALTER TABLE tasks ADD COLUMN lighting_check TEXT NOT NULL DEFAULT 'not_required' CHECK(lighting_check IN ('not_required', 'pending', 'passed', 'failed'))`);
   }
   if (!columnExists('tasks', 'hoisting_order')) {
     db.exec(`ALTER TABLE tasks ADD COLUMN hoisting_order INTEGER`);

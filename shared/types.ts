@@ -4,19 +4,28 @@ export type TaskStatus = "pending" | "in_progress" | "completed" | "blocked";
 
 export type TaskPhase = "pre_exhibition" | "opening" | "teardown";
 
+export type TaskPriority = "low" | "medium" | "high" | "critical";
+
 export type TaskCategory =
+  | "wall_install"
+  | "installation"
+  | "framing"
+  | "lighting"
+  | "exhibit_placement"
+  | "condition_check"
+  | "label_printing"
+  | "cleaning"
   | "planning"
   | "design"
   | "construction"
-  | "installation"
-  | "lighting"
-  | "exhibit_placement"
   | "quality_check"
   | "opening_preparation";
 
-export type InsuranceStatus = "not_insured" | "insured" | "claim_in_progress";
+export type InsuranceStatus = "not_set" | "pending" | "covered" | "not_required";
 
-export type LightingCheckStatus = "pending" | "passed" | "failed";
+export type LightingCheckStatus = "not_required" | "pending" | "passed" | "failed";
+
+export type ExhibitStatus = "not_arrived" | "in_transit" | "arrived" | "in_storage" | "on_display" | "removed" | "in_position";
 
 export interface User {
   id: string;
@@ -55,6 +64,7 @@ export interface Task {
   phase: TaskPhase;
   status: TaskStatus;
   progress: number;
+  priority: TaskPriority;
   assignee_role: UserRole;
   assigned_to: string | null;
   due_date: string | null;
@@ -70,6 +80,55 @@ export interface Task {
   created_at: string;
   updated_at: string;
   created_by: string;
+}
+
+export interface CreateTaskRequest {
+  exhibition_id: string;
+  name: string;
+  description?: string;
+  category: TaskCategory;
+  phase: TaskPhase;
+  priority: TaskPriority;
+  assignee_role: UserRole;
+  assigned_to?: string;
+  due_date?: string;
+  transport_window_start?: string;
+  transport_window_end?: string;
+  insurance_status?: InsuranceStatus;
+  lighting_check?: LightingCheckStatus;
+  hoisting_order?: number;
+  created_by: string;
+  dependencies?: string[];
+  reason?: string;
+  estimated_hours?: number;
+}
+
+export interface CreateExhibitionRequest {
+  name: string;
+  description?: string;
+  start_date?: string;
+  end_date?: string;
+  created_by: string;
+}
+
+export interface CreateExhibitRequest {
+  exhibition_id: string;
+  name: string;
+  artist?: string;
+  year?: string;
+  is_key_exhibit?: boolean;
+  needs_thermostat?: boolean;
+  status?: ExhibitStatus;
+  position?: string;
+  placement_task_id?: string;
+  created_by: string;
+}
+
+export interface UpdateTaskProgressRequest {
+  status: TaskStatus;
+  progress?: number;
+  comment?: string;
+  updated_by: string;
 }
 
 export interface TaskDependency {
@@ -94,7 +153,7 @@ export interface Exhibit {
   restoration_confirmed_at: string | null;
   restoration_confirmed_by: string | null;
   placement_task_id: string | null;
-  status: "not_arrived" | "in_storage" | "placed" | "in_position";
+  status: ExhibitStatus;
   position: string | null;
   created_at: string;
   updated_at: string;

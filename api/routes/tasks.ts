@@ -210,6 +210,7 @@ router.post('/', (req: Request, res: Response): void => {
       description,
       phase,
       category,
+      priority,
       assignee_role,
       assigned_to,
       due_date,
@@ -253,12 +254,13 @@ router.post('/', (req: Request, res: Response): void => {
     const id = generateId('task');
     const now = new Date().toISOString();
     const actualPhase: TaskPhase = phase || 'pre_exhibition';
+    const actualPriority = priority || 'medium';
 
     db.prepare(
-      `INSERT INTO tasks (id, exhibition_id, name, description, phase, category, status, progress,
+      `INSERT INTO tasks (id, exhibition_id, name, description, phase, category, status, progress, priority,
        assignee_role, assigned_to, due_date, transport_window_start, transport_window_end,
        insurance_status, lighting_check, hoisting_order, created_at, updated_at, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       id,
       exhibition_id,
@@ -266,13 +268,14 @@ router.post('/', (req: Request, res: Response): void => {
       description || '',
       actualPhase,
       category as TaskCategory,
+      actualPriority,
       assignee_role as UserRole,
       assigned_to || null,
       due_date || null,
       transport_window_start || null,
       transport_window_end || null,
-      (insurance_status as InsuranceStatus) || 'not_insured',
-      (lighting_check as LightingCheckStatus) || 'pending',
+      (insurance_status as InsuranceStatus) || 'not_set',
+      (lighting_check as LightingCheckStatus) || 'not_required',
       hoisting_order ?? null,
       now,
       now,
@@ -311,6 +314,7 @@ router.put('/:id', (req: Request, res: Response): void => {
       description,
       phase,
       category,
+      priority,
       assignee_role,
       assigned_to,
       due_date,
@@ -356,6 +360,7 @@ router.put('/:id', (req: Request, res: Response): void => {
         description = COALESCE(?, description),
         phase = COALESCE(?, phase),
         category = COALESCE(?, category),
+        priority = COALESCE(?, priority),
         assignee_role = COALESCE(?, assignee_role),
         assigned_to = ?,
         due_date = ?,
@@ -373,6 +378,7 @@ router.put('/:id', (req: Request, res: Response): void => {
       description ?? null,
       phase ?? null,
       category ?? null,
+      priority ?? null,
       assignee_role ?? null,
       assigned_to ?? null,
       due_date ?? null,
